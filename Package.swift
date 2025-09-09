@@ -16,11 +16,12 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/hyperoslo/Cache.git", from: "7.4.0"),
+        .package(url: "https://github.com/min554357332/CacheDataPreprocessor.git", from: "0.0.1"),
     ],
     targets: [
         .target(
             name: "XCCache",
-            dependencies: ["Cache"]
+            dependencies: ["Cache","CacheDataPreprocessor"]
         ),
     ]
 )

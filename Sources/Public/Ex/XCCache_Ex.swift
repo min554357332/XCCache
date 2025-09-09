@@ -1,4 +1,5 @@
 import Foundation
+import CacheDataPreprocessor
 
 // MARK: - NECache的默认实现
 public extension NECache {

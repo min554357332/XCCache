@@ -1,5 +1,5 @@
 {
-  "originHash" : "f0c663e0ff7ca00f30df186c8dac7cd4e4e5631ddd1859f7da143a59d9cf6223",
+  "originHash" : "c534251ce9b17a86d97c6b159692d8fb69348fdefaa761daefd6b4d2b85c76b1",
   "pins" : [
     {
       "identity" : "cache",
@@ -8,6 +8,15 @@
       "state" : {
         "revision" : "24e47109e31b2031cb26e25cc1b81b607496066c",
         "version" : "7.4.0"
+      }
+    },
+    {
+      "identity" : "cachedatapreprocessor",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/min554357332/CacheDataPreprocessor.git",
+      "state" : {
+        "revision" : "dfefda9c57854d3ee643c3392cd699ca1d13808a",
+        "version" : "0.0.1"
       }
     }
   ],

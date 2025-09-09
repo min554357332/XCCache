@@ -1,4 +1,5 @@
 import Foundation
+import CacheDataPreprocessor
 
 internal extension Manager {
     /// 异步存储对象到缓存

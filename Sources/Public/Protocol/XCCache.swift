@@ -1,4 +1,5 @@
 import Foundation
+import CacheDataPreprocessor
 
 public protocol NECache: Codable, Sendable {
     static func r(_ filename: String, dataPreprocessor: XCCacheDataPreprocessor) async throws -> Self
