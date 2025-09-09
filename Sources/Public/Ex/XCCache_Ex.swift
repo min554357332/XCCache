@@ -3,7 +3,7 @@ import Foundation
 // MARK: - NECache的默认实现
 public extension NECache {
     static func r(_ localFileName: String, dataPreprocessor: XCCacheDataPreprocessor) async throws -> Self {
-        try await Self._readLocal(localFileName)
+        try await Self._readLocal(localFileName, dataPreprocessor: dataPreprocessor)
         let className = String.init(describing: type(of: self))
         let result = try await Manager.shared.object(forKey: className, as: self, dataPreprocessor: dataPreprocessor)
         return result
@@ -19,11 +19,11 @@ public extension NECache {
         return await Manager.shared.isExpired(forKey: className)
     }
     
-    static private func _readLocal(_ filename: String) async throws {
+    static private func _readLocal(_ filename: String, dataPreprocessor: XCCacheDataPreprocessor) async throws {
         if await Manager.shared.exists(forKey: String.init(describing: type(of: self))) == false,
            let localFilePath = Bundle.main.url(forResource: filename, withExtension: nil) {
             let data = try Data(contentsOf: localFilePath)
-            try await JSONDecoder().decode(self, from: data).w()
+            try await JSONDecoder().decode(self, from: data).w(dataPreprocessor: dataPreprocessor)
         }
     }
 }

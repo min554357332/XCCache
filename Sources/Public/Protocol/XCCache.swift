@@ -1,8 +1,8 @@
 import Foundation
 
 public protocol NECache: Codable, Sendable {
-    static func r(_ filename: String) async throws -> Self
-    func w() async throws
+    static func r(_ filename: String, dataPreprocessor: XCCacheDataPreprocessor) async throws -> Self
+    func w(dataPreprocessor: XCCacheDataPreprocessor) async throws
     static func expired() async -> Bool
 }
 
