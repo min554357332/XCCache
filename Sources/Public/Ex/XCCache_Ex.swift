@@ -3,16 +3,23 @@ import CacheDataPreprocessor
 
 // MARK: - NECache的默认实现
 public extension NECache {
-    static func r(_ localFileName: String, dataPreprocessor: XCCacheDataPreprocessor) async throws -> Self {
-        try await Self._readLocal(localFileName, dataPreprocessor: dataPreprocessor)
+    static func r(
+        _ localFileName: String,
+        encode: XCCacheDataPreprocessor,
+        decode: XCCacheDataPreprocessor
+    ) async throws -> Self {
+        try await Self._readLocal(localFileName, encode: encode, decode: decode)
         let className = String.init(describing: type(of: self))
-        let result = try await Manager.shared.object(forKey: className, as: self, dataPreprocessor: dataPreprocessor)
+        let result = try await Manager.shared.object(forKey: className, as: self, encode: encode, decode: decode)
         return result
     }
 
-    func w(dataPreprocessor: XCCacheDataPreprocessor) async throws {
+    func w(
+        encode: XCCacheDataPreprocessor,
+        decode: XCCacheDataPreprocessor
+    ) async throws {
         let className = String.init(describing: type(of: Self.self))
-        try await Manager.shared.store(self, forKey: className, dataPreprocessor: dataPreprocessor)
+        try await Manager.shared.store(self, forKey: className, encode: encode, decode: decode)
     }
     
     static func expired() async -> Bool {
@@ -20,14 +27,18 @@ public extension NECache {
         return await Manager.shared.isExpired(forKey: className)
     }
     
-    static private func _readLocal(_ filename: String, dataPreprocessor: XCCacheDataPreprocessor) async throws {
+    static private func _readLocal(
+        _ filename: String,
+        encode: XCCacheDataPreprocessor,
+        decode: XCCacheDataPreprocessor
+    ) async throws {
         if await Manager.shared.exists(forKey: String.init(describing: type(of: self))) == false,
            let localFilePath = Bundle.main.url(forResource: filename, withExtension: nil) {
             let resourceData = try Data(contentsOf: localFilePath)
             let resourceString = String(data: resourceData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
             let data = Data(base64Encoded: resourceString!)
-            let preprocess = try await dataPreprocessor.preprocess(data: data!)
-            try await JSONDecoder().decode(self, from: preprocess).w(dataPreprocessor: dataPreprocessor)
+            let preprocess = try await decode.preprocess(data: data!)
+            try await JSONDecoder().decode(self, from: preprocess).w(encode: encode, decode: decode)
         }
     }
 }

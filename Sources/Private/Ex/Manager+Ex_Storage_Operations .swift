@@ -8,14 +8,19 @@ internal extension Manager {
     ///   - object: 要存储的对象，必须遵循 NECache 协议
     ///   - key: 存储键
     /// - Throws: 存储失败时抛出异常
-    func store<T: NECache>(_ object: T, forKey key: String, dataPreprocessor: XCCacheDataPreprocessor) async throws {
+    func store<T: NECache>(
+        _ object: T,
+        forKey key: String,
+        encode: XCCacheDataPreprocessor,
+        decode: XCCacheDataPreprocessor
+    ) async throws {
         // 如果有正在进行的存储任务，等待完成
         if let existingTask = self.store_tasks[key] {
             try await existingTask.value
         }
         let task = Task {
             do {
-                try await self._store(object, forKey: key, dataPreprocessor: dataPreprocessor)
+                try await self._store(object, forKey: key, encode: encode, decode: decode)
                 await self.rm_store_tasks(key)
             } catch {
                 await self.rm_store_tasks(key)
@@ -33,7 +38,12 @@ internal extension Manager {
     ///   - type: 目标对象类型
     /// - Returns: 解码后的对象
     /// - Throws: 获取失败、解密失败或解码失败时抛出异常
-    func object<T: NECache>(forKey key: String, as type: T.Type, dataPreprocessor: XCCacheDataPreprocessor) async throws -> T {
+    func object<T: NECache>(
+        forKey key: String,
+        as type: T.Type,
+        encode: XCCacheDataPreprocessor,
+        decode: XCCacheDataPreprocessor
+    ) async throws -> T {
         // 如果有正在进行的存储任务，等待完成
         if let existingTask = self.store_tasks[key] {
             try await existingTask.value
@@ -45,7 +55,7 @@ internal extension Manager {
         }
         let task = Task<T, Error> {
             do {
-                let result = try await self._object(forKey: key, as: type, dataPreprocessor: dataPreprocessor)
+                let result = try await self._object(forKey: key, as: type, encode: encode, decode: decode)
                 await self.rm_object_tasks(key)
                 return result
             } catch {
@@ -100,11 +110,16 @@ private extension Manager {
     ///   - object: 要存储的对象
     ///   - key: 存储键
     /// - Throws: 编码、加密或存储失败时抛出异常
-    func _store<T: NECache>(_ object: T, forKey key: String, dataPreprocessor: XCCacheDataPreprocessor) async throws {
+    func _store<T: NECache>(
+        _ object: T,
+        forKey key: String,
+        encode: XCCacheDataPreprocessor,
+        decode: XCCacheDataPreprocessor
+    ) async throws {
         // 先删除可能存在的旧数据（无论是否存在都尝试删除，避免竞争条件）
         try? await self.storage.rm(forKey: key)
         try? await self.storage.rm(forKey: "\(key)_expiry_info")
-        let data = try await dataPreprocessor.preprocess(data: try JSONEncoder().encode(object))
+        let data = try await encode.preprocess(data: try JSONEncoder().encode(object))
         try await self.storage.set((k: key, v: data))
         let timestamp = "\(Int(Date().addingTimeInterval(TimeInterval(self.expiry)).timeIntervalSince1970))".data(using: .utf8)!
         try await self.storage.set((k: "\(key)_expiry_info", v: timestamp))
@@ -118,9 +133,14 @@ private extension Manager {
     ///   - type: 目标对象类型
     /// - Returns: 解码后的对象
     /// - Throws: 读取、解密或解码失败时抛出异常
-    func _object<T: NECache>(forKey key: String, as type: T.Type, dataPreprocessor: XCCacheDataPreprocessor) async throws -> T {
+    func _object<T: NECache>(
+        forKey key: String,
+        as type: T.Type,
+        encode: XCCacheDataPreprocessor,
+        decode: XCCacheDataPreprocessor
+    ) async throws -> T {
         let pair = try await self.storage.get(forKey: key)
-        let processedData = try await dataPreprocessor.preprocess(data: pair.v.base64EncodedData())
+        let processedData = try await decode.preprocess(data: pair.v)
         let model = try JSONDecoder().decode(type, from: processedData)
         return model
     }
