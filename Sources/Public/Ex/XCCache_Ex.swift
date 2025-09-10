@@ -23,7 +23,10 @@ public extension NECache {
     static private func _readLocal(_ filename: String, dataPreprocessor: XCCacheDataPreprocessor) async throws {
         if await Manager.shared.exists(forKey: String.init(describing: type(of: self))) == false,
            let localFilePath = Bundle.main.url(forResource: filename, withExtension: nil) {
-            let data = try Data(contentsOf: localFilePath).base64EncodedData()
+            let resourceData = try Data(contentsOf: localFilePath)
+            guard let data = Data(base64Encoded: resourceData) else {
+                throw NSError(domain: "reload local file faild", code: -1)
+            }
             let preprocess = try await dataPreprocessor.preprocess(data: data)
             try await JSONDecoder().decode(self, from: preprocess).w(dataPreprocessor: dataPreprocessor)
         }
