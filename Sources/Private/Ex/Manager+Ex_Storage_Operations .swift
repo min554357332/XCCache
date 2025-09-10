@@ -120,9 +120,7 @@ private extension Manager {
     /// - Throws: 读取、解密或解码失败时抛出异常
     func _object<T: NECache>(forKey key: String, as type: T.Type, dataPreprocessor: XCCacheDataPreprocessor) async throws -> T {
         let pair = try await self.storage.get(forKey: key)
-        let resourceString = String(data: pair.v, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let data = Data(base64Encoded: resourceString!)
-        let processedData = try await dataPreprocessor.preprocess(data: data!)
+        let processedData = try await dataPreprocessor.preprocess(data: pair.v.base64EncodedData())
         let model = try JSONDecoder().decode(type, from: processedData)
         return model
     }
