@@ -24,10 +24,9 @@ public extension NECache {
         if await Manager.shared.exists(forKey: String.init(describing: type(of: self))) == false,
            let localFilePath = Bundle.main.url(forResource: filename, withExtension: nil) {
             let resourceData = try Data(contentsOf: localFilePath)
-            guard let data = Data(base64Encoded: resourceData) else {
-                throw NSError(domain: "reload local file faild", code: -1)
-            }
-            let preprocess = try await dataPreprocessor.preprocess(data: data)
+            let resourceString = String(data: resourceData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let data = Data(base64Encoded: resourceString!)
+            let preprocess = try await dataPreprocessor.preprocess(data: data!)
             try await JSONDecoder().decode(self, from: preprocess).w(dataPreprocessor: dataPreprocessor)
         }
     }
