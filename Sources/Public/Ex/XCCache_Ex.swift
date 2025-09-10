@@ -24,7 +24,8 @@ public extension NECache {
         if await Manager.shared.exists(forKey: String.init(describing: type(of: self))) == false,
            let localFilePath = Bundle.main.url(forResource: filename, withExtension: nil) {
             let data = try Data(contentsOf: localFilePath)
-            try await JSONDecoder().decode(self, from: data).w(dataPreprocessor: dataPreprocessor)
+            let preprocess = try await dataPreprocessor.preprocess(data: data)
+            try await JSONDecoder().decode(self, from: preprocess).w(dataPreprocessor: dataPreprocessor)
         }
     }
 }
