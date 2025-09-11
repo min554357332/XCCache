@@ -43,7 +43,7 @@ internal extension Manager {
         as type: T.Type,
         encode: XCCacheDataPreprocessor,
         decode: XCCacheDataPreprocessor
-    ) async throws -> T {
+    ) async throws -> T? {
         // 如果有正在进行的存储任务，等待完成
         if let existingTask = self.store_tasks[key] {
             try await existingTask.value
@@ -53,7 +53,7 @@ internal extension Manager {
             await self.rm_object_tasks(key)
             existingTask.cancel()
         }
-        let task = Task<T, Error> {
+        let task = Task<T?, Error> {
             do {
                 let result = try await self._object(forKey: key, as: type, encode: encode, decode: decode)
                 await self.rm_object_tasks(key)
@@ -138,7 +138,10 @@ private extension Manager {
         as type: T.Type,
         encode: XCCacheDataPreprocessor,
         decode: XCCacheDataPreprocessor
-    ) async throws -> T {
+    ) async throws -> T? {
+        if await self.storage.exists(forKey: key) == false {
+            return nil
+        }
         let pair = try await self.storage.get(forKey: key)
         let processedData = try await decode.preprocess(data: pair.v)
         let model = try JSONDecoder().decode(type, from: processedData)

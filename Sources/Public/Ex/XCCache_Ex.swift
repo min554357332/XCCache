@@ -4,11 +4,13 @@ import CacheDataPreprocessor
 // MARK: - NECache的默认实现
 public extension NECache {
     static func r(
-        _ localFileName: String,
+        _ localFileName: String?,
         encode: XCCacheDataPreprocessor,
         decode: XCCacheDataPreprocessor
-    ) async throws -> Self {
-        try await Self._readLocal(localFileName, encode: encode, decode: decode)
+    ) async throws -> Self? {
+        if let filename = localFileName {
+            try await Self._readLocal(filename, encode: encode, decode: decode)
+        }
         let className = String.init(describing: type(of: self))
         let result = try await Manager.shared.object(forKey: className, as: self, encode: encode, decode: decode)
         return result
